@@ -1,4 +1,4 @@
-# Music Genre Classification: SR & Data Dimension Analysis
+# 音楽ジャンルのAIによる分類
 
 サンプリング周波数とデータの次元（1D/2D）が、AIの音楽ジャンル識別精度にどのような影響を与えるかを調査しました。
 
