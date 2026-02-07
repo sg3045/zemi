@@ -1,23 +1,25 @@
 # zemi
-## Core Implementation
-
-本プロジェクトの主要な実装コードの抜粋です。
-Librosaを用いたダウンサンプリングと、PyTorchを用いたResNetベースの学習を行っています。
-
-### 1. Data Preprocessing (Downsampling)
-元音源(22,050Hz)を、実験条件である16,000Hzと3,000Hzに変換します。
-
-```python
 import librosa
-import torchaudio
+import torch.nn as nn
+from torchvision import models
 
-def preprocess_audio(file_path, target_sr):
-    # 音声の読み込みとリサンプリング
-    waveform, sr = librosa.load(file_path, sr=target_sr)
-    
-    # 2D-CNN用：メルスペクトログラムへの変換
-    # 3,000Hzの場合は高域がカットされ、低域のパターンが強調される
+# --- データの前処理 ---
+# 元音源をターゲットのサンプリングレート(3,000Hz or 16,000Hz)に変換
+def get_spectrogram(file_path, target_sr):
+    waveform, _ = librosa.load(file_path, sr=target_sr)
+    # 2D-CNN用：メルスペクトログラム生成
     mel_spec = librosa.feature.melspectrogram(y=waveform, sr=target_sr, n_mels=128)
-    mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
-    
-    return waveform, mel_spec_db
+    return librosa.power_to_db(mel_spec)
+
+# --- モデル構成 (2D-CNN: ResNet18) ---
+# 画像認識モデルを音声識別に応用
+class GenreClassifier2D(nn.Module):
+    def __init__(self):
+        super(GenreClassifier2D, self).__init__()
+        self.model = models.resnet18(pretrained=True)
+        self.model.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False) # 1ch入力へ
+        self.model.fc = nn.Linear(self.model.fc.in_features, 10) # 10ジャンル分類
+
+# --- 学習設定 (Hyperparameters) ---
+optimizer = torch.optim.Adam(model.parameters(), lr=0.0005) # 学習の安定化のため0.0005に設定
+batch_size = 32
